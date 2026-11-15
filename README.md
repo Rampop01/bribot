@@ -221,12 +221,13 @@ To try it alone, open the site in two browser windows (make the second one a pri
 
 ## Deploy it (public link)
 
-The repo includes a Render blueprint ([render.yaml](render.yaml)) that creates the game server and a Postgres database together.
+The game server runs on Render (blueprint in [render.yaml](render.yaml)) and its data lives in a free Neon Postgres database, which does not expire.
 
-1. Sign in at https://render.com with GitHub.
-2. **New → Blueprint**, pick this repo.
-3. Enter the three secrets when asked: `SERV_API_KEY`, `REPPO_API_KEY`, `KITE_PRIVATE_KEY`.
-4. **Apply**. A few minutes later the game is live at `https://<name>.onrender.com`.
+1. Create a database at https://neon.tech in the **Frankfurt** region and copy its connection string.
+2. Sign in at https://render.com with GitHub.
+3. **New → Blueprint**, pick this repo.
+4. Enter the four secrets when asked: `DATABASE_URL` (the Neon connection string), `SERV_API_KEY`, `REPPO_API_KEY`, `KITE_PRIVATE_KEY`.
+5. **Apply**. A few minutes later the game is live at `https://<name>.onrender.com`.
 
 Any host that runs Node and offers Postgres works the same way: set `DATABASE_URL` and the secrets, run `npm install --include=dev && npm run build`, then `npm start`.
 
@@ -243,9 +244,6 @@ Any host that runs Node and offers Postgres works the same way: set `DATABASE_UR
 | **Failures stay contained** | If SERV, Reppo or a payment fails, that step is skipped or reported and the game carries on. |
 
 Known limit: a game in progress lives in the server's memory. If the server is redeployed mid-game, that one game ends; nothing already finished is lost.
-
-Render's free database is deleted after 30 days. For a long-lived deployment, switch the database plan in `render.yaml`, or point `DATABASE_URL` at another Postgres (a free Neon database works).
-
 ### Keys
 
 | Key | Where to get it | Needed for |

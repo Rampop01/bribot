@@ -1,29 +1,22 @@
-# Render blueprint: the game server plus a Postgres database for saved games, players and lessons.
-# Deploy: Render dashboard -> New -> Blueprint -> pick this repo -> fill in the three secrets.
-#
-# Plans: "free" works out of the box. Render deletes free databases after 30 days, so for a
-# long-lived deployment change the database plan to "basic-256mb" (or point DATABASE_URL at any
-# other Postgres, e.g. a free Neon database, and remove the databases block).
-databases:
-  - name: bribot-db
-    plan: free
+# Render blueprint: the game server. Saved games, players and lessons live in an external
+# Postgres database (a free Neon database works and does not expire).
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo -> fill in the four secrets.
 
 services:
   - type: web
     name: bribot
     runtime: node
     plan: free
+    region: frankfurt # keep this next to the database region
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: 22
-      - key: DATABASE_URL
-        fromDatabase:
-          name: bribot-db
-          property: connectionString
       # Secrets: entered in the Render dashboard, never stored in the repo.
+      - key: DATABASE_URL # Postgres connection string, e.g. from Neon
+        sync: false
       - key: SERV_API_KEY
         sync: false
       - key: REPPO_API_KEY
