@@ -1,5 +1,13 @@
-# Render blueprint: one web service that serves the game (web app + live game server).
+# Render blueprint: the game server plus a Postgres database for saved games, players and lessons.
 # Deploy: Render dashboard -> New -> Blueprint -> pick this repo -> fill in the three secrets.
+#
+# Plans: "free" works out of the box. Render deletes free databases after 30 days, so for a
+# long-lived deployment change the database plan to "basic-256mb" (or point DATABASE_URL at any
+# other Postgres, e.g. a free Neon database, and remove the databases block).
+databases:
+  - name: bribot-db
+    plan: free
+
 services:
   - type: web
     name: bribot
@@ -11,6 +19,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bribot-db
+          property: connectionString
       # Secrets: entered in the Render dashboard, never stored in the repo.
       - key: SERV_API_KEY
         sync: false
@@ -33,3 +45,10 @@ services:
         value: 0.4
       - key: SERV_MODEL
         value: gpt-5.4-mini
+      # Ceilings that protect your SERV and Reppo credits from heavy public use.
+      - key: MAX_GAMES_PER_DAY
+        value: 200
+      - key: MAX_ROOMS
+        value: 40
+      - key: ROOMS_PER_IP_PER_HOUR
+        value: 8

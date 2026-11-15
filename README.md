@@ -178,7 +178,7 @@ The stats page (link on the home screen) shows:
 
 ### What gets saved
 
-Everything on the stats page is saved to `data/store.json` on the server and survives restarts: finished games, player totals, the bot's lessons and its spending log. Players are identified by the name they type, so there are no accounts. A game in progress is held in memory only; if the server restarts mid-game, that game is lost.
+Everything on the stats page is saved and survives restarts: finished games, player totals, the bot's lessons and its spending log. In production it goes to a Postgres database; on your own machine it goes to `data/store.json`. Players are identified by the name they type, so there are no accounts. A game in progress is held in memory only; if the server restarts mid-game, that game is lost.
 
 ---
 
@@ -219,12 +219,32 @@ Open **http://localhost:5173**.
 
 To try it alone, open the site in two browser windows (make the second one a private window so it gets its own player), create a room in one and join with the code in the other. Wait a few seconds for the bot to take its seat, then press **Start game**.
 
-To play with friends on other networks:
+## Deploy it (public link)
 
-```bash
-npm run build && npm start     # serves the whole app on port 3001
-ngrok http 3001                # share the https link it prints
-```
+The repo includes a Render blueprint ([render.yaml](render.yaml)) that creates the game server and a Postgres database together.
+
+1. Sign in at https://render.com with GitHub.
+2. **New → Blueprint**, pick this repo.
+3. Enter the three secrets when asked: `SERV_API_KEY`, `REPPO_API_KEY`, `KITE_PRIVATE_KEY`.
+4. **Apply**. A few minutes later the game is live at `https://<name>.onrender.com`.
+
+Any host that runs Node and offers Postgres works the same way: set `DATABASE_URL` and the secrets, run `npm install --include=dev && npm run build`, then `npm start`.
+
+### What makes it production-ready
+
+| Concern | How it is handled |
+|---|---|
+| **Data survives restarts** | With `DATABASE_URL` set, games, player totals, lessons and the spend log are stored in Postgres and loaded at startup. Without it, a local file is used (development only). |
+| **No lost writes on redeploy** | On shutdown the server stops taking players, saves pending changes, then exits. |
+| **Server stays awake** | While running, the server requests its own public address every 4 minutes, so hosts that sleep idle services keep it up. |
+| **Credit and wallet protection** | Limits on rooms per visitor per hour, total open rooms, games per day and chat speed; the bot's spending is capped per bribe, per game and per 24 hours. |
+| **Abandoned rooms** | Lobbies are closed when everyone leaves; idle rooms are cleaned up automatically. If the host leaves a lobby, the next player becomes host. |
+| **Dropped connections** | A player who refreshes or loses signal is put back in their seat automatically. |
+| **Failures stay contained** | If SERV, Reppo or a payment fails, that step is skipped or reported and the game carries on. |
+
+Known limit: a game in progress lives in the server's memory. If the server is redeployed mid-game, that one game ends; nothing already finished is lost.
+
+Render's free database is deleted after 30 days. For a long-lived deployment, switch the database plan in `render.yaml`, or point `DATABASE_URL` at another Postgres (a free Neon database works).
 
 ### Keys
 

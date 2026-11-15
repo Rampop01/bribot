@@ -38,6 +38,16 @@ export const config = {
     dailyCap: num(process.env.BOT_DAILY_CAP, 50), // hard cap on what the bot may spend in 24h
   },
 
+  // Ceilings for a public deployment (every game costs SERV and Reppo credits).
+  limits: {
+    maxRooms: num(process.env.MAX_ROOMS, 40),
+    roomsPerIpPerHour: num(process.env.ROOMS_PER_IP_PER_HOUR, 8),
+    gamesPerDay: num(process.env.MAX_GAMES_PER_DAY, 200),
+  },
+
+  // Public address of this deployment (Render sets RENDER_EXTERNAL_URL automatically).
+  publicUrl: (process.env.PUBLIC_URL ?? process.env.RENDER_EXTERNAL_URL ?? '').replace(/\/$/, ''),
+
   game: {
     chatSeconds: num(process.env.CHAT_SECONDS, 120),
     voteSeconds: num(process.env.VOTE_SECONDS, 30),

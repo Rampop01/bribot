@@ -84,6 +84,7 @@ export class Room {
   private ratings = new Map<string, { score: number; comment: string }>();
   private usedTopics = new Set<string>();
   private lastWhisperAt = new Map<string, number>();
+  private lastChatAt = new Map<string, number>();
   private timer: NodeJS.Timeout | null = null;
   private botJoinTimer: NodeJS.Timeout | null = null;
   private finalizeTimer: NodeJS.Timeout | null = null;
@@ -155,6 +156,21 @@ export class Room {
     this.players.push({ id: this.bot.id, token: '', name: this.bot.name, realName: null, isBot: true, isHost: false, alive: true });
     for (const p of this.humans) p.name = pool.pop()!;
     this.players.sort(() => Math.random() - 0.5);
+  }
+
+  hasConnectedHumans() {
+    return this.humans.some((p) => p.socketId);
+  }
+
+  /** A player leaves before the game starts. Returns true when the lobby is now empty. */
+  leaveLobby(playerId: string): boolean {
+    if (this.phase !== 'lobby') return false;
+    const p = this.byId(playerId);
+    if (!p) return this.players.length === 0;
+    this.players = this.players.filter((x) => x.id !== playerId);
+    if (p.isHost && this.players[0]) this.players[0].isHost = true; // hand the host role on
+    this.broadcast();
+    return this.players.length === 0;
   }
 
   start(playerId: string): Result {
@@ -257,6 +273,8 @@ export class Room {
     if (!p || !text) return { ok: false, error: 'Empty message' };
     if (this.phase !== 'chat') return { ok: false, error: 'Chat opens during the discussion phase' };
     if (!p.alive) return { ok: false, error: 'You were voted out' };
+    if (Date.now() - (this.lastChatAt.get(p.id) ?? 0) < 700) return { ok: false, error: 'Slow down a little' };
+    this.lastChatAt.set(p.id, Date.now());
     this.messages.push({ id: newId(), playerId: p.id, name: p.name, text, ts: Date.now(), round: this.round, kind: 'chat' });
     this.lastHumanMessageAt = Date.now();
     this.touch();
