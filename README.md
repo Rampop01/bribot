@@ -4,6 +4,9 @@
 
 Built for the **SERV Hackathon, Edition 02** (Kite track). Powered by **SERV Reasoning**, **Kite** and **Reppo**.
 
+**▶ Play now: https://bribot.onrender.com**  
+**🎬 Demo video: https://x.com/OmowumiRahmat/status/2122056165488017789**
+
 ![Bribot home screen](docs/screenshots/01-home.png)
 
 ---
