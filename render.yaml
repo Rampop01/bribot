@@ -1,0 +1,35 @@
+# Render blueprint: one web service that serves the game (web app + live game server).
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo -> fill in the three secrets.
+services:
+  - type: web
+    name: bribot
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      # Secrets: entered in the Render dashboard, never stored in the repo.
+      - key: SERV_API_KEY
+        sync: false
+      - key: REPPO_API_KEY
+        sync: false
+      - key: KITE_PRIVATE_KEY
+        sync: false
+      # Real payments on Kite testnet, paid in KITE, with small amounts.
+      - key: KITE_MODE
+        value: chain
+      - key: KITE_TOKEN_ADDRESS
+        value: native
+      - key: BOT_STAKE
+        value: 0.05
+      - key: BRIBE_MAX
+        value: 0.02
+      - key: BRIBE_BUDGET
+        value: 0.04
+      - key: BOT_DAILY_CAP
+        value: 0.4
+      - key: SERV_MODEL
+        value: gpt-5.4-mini
